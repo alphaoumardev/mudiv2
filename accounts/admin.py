@@ -1,10 +1,14 @@
 from django.contrib import admin
 
 # Register your models here.
+from django.contrib import admin
+
+# Register your models here.
 
 from django.contrib.auth.admin import UserAdmin
 from .models import *
 
+admin.site.register(UserAccount,)
 
 # Register your models here.
 # class CustomerAdmin(UserAdmin):
@@ -16,4 +20,3 @@ from .models import *
 #     list_filter = ()
 #     fieldsets = ()
 
-admin.site.register(CustomerProfile,)

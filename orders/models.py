@@ -1,6 +1,7 @@
 from django.db import models
 from mart.models import Product
-from customer.models import CustomerProfile
+# from customer.models import UserAccount
+from accounts.models import UserAccount
 from django.contrib.auth.models import User, AbstractUser
 import uuid
 
@@ -26,7 +27,7 @@ class OrderItems(models.Model):
 
 class OrderDetails(models.Model):
     details_id = models.OneToOneField(OrderItems, on_delete=models.CASCADE)
-    user_id = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(UserAccount, on_delete=models.CASCADE)
     total = models.IntegerField(null=True)
     payment_id = models.UUIDField(default=uuid.uuid4, editable=False)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -48,7 +49,7 @@ class PaymentDetails(models.Model):
 
 
 class UserPay(models.Model):
-    user_id = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE)
+    user_id = models.ForeignKey(UserAccount, on_delete=models.CASCADE)
     payment_type = models.CharField(max_length=20)
     provider = models.CharField(max_length=20)
     account_no = models.UUIDField()

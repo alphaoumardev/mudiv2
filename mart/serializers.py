@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from orders.models import *
-from customer.models import *
+# from customer.models import *
+from accounts.models import *
 from .models import *
 
 

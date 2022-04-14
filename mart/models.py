@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User, AbstractUser
 # from orders.models import CartItem, OrderItems
-from customer.models import CustomerProfile
+# from customer.models import UserAccount
+from accounts.models import UserAccount
 import uuid
 
 
@@ -107,7 +108,7 @@ class Sliders(models.Model):
 
 class Comments(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    user = models.ForeignKey(CustomerProfile, on_delete=models.CASCADE)
+    user = models.ForeignKey(UserAccount, on_delete=models.CASCADE)
     subject = models.CharField(max_length=50)
     content = models.TextField(max_length=400)
     create_at = models.DateTimeField(auto_now_add=True)

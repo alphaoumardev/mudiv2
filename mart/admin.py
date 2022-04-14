@@ -1,6 +1,6 @@
 # Register your models here.
 from django.contrib import admin
-from customer.models import *
+from accounts.models import *
 from .models import *
 
 
