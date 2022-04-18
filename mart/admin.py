@@ -25,9 +25,7 @@ class ProductAdmins(admin.ModelAdmin):
 admin.site.register(Genre)
 admin.site.register(Types)
 admin.site.register(Category)
-
 admin.site.register(Product, ProductAdmins)  # ProductAdims
-
 admin.site.register(Tags)
 admin.site.register(Variant)
 admin.site.register(FuturedImages)

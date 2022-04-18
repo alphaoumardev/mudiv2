@@ -29,7 +29,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all().order_by("id")
     serializer_class = ProductsModel
     pagination_class = MyPageNumberPagination
-    permission_classes=[AllowAny]
+    permission_classes = [AllowAny]
 
 
 # Here are just for the products

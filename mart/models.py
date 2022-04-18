@@ -1,7 +1,8 @@
 from django.db import models
 from django.contrib.auth.models import User, AbstractUser
 # from orders.models import CartItem, OrderItems
-# from customer.models import UserAccount
+from django.utils.safestring import mark_safe
+
 from accounts.models import UserAccount
 import uuid
 

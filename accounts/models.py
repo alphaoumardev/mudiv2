@@ -1,5 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.db.models.signals import post_save
+from django_countries.fields import CountryField
+
+from mudi import settings
 
 
 class UserAccountManager(BaseUserManager):
@@ -10,6 +14,7 @@ class UserAccountManager(BaseUserManager):
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
 
+        user.is_active = True
         user.set_password(password)
         user.save()
         return user
@@ -28,33 +33,22 @@ class UserAccountManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-
-class UserAccount(AbstractBaseUser, PermissionsMixin):
-    SEX = (("Male", "Male"),
+SEX = (("Male", "Male"),
            ("Female", "Female"),
            ("Secret", "Secret"),)
 
-    email = models.EmailField(max_length=255, unique=True)
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
+class UserAccount(AbstractBaseUser, PermissionsMixin):
 
-    is_active = models.BooleanField(default=False)
+    email = models.EmailField(max_length=25, unique=True)
+    first_name = models.CharField(max_length=25)
+    last_name = models.CharField(max_length=25)
+
+    is_active = models.BooleanField(default=True)
     is_admin = models.BooleanField(default=False)
     is_staff = models.BooleanField(default=False)
     is_superuser = models.BooleanField(default=False)
     date_joined = models.DateTimeField(verbose_name='date joined', auto_now_add=True, null=True)
     last_login = models.DateTimeField(verbose_name='last login', auto_now=True, null=True)
-
-    phone_number = models.CharField(max_length=15, unique=True, null=True)
-    avatar = models.ImageField(upload_to="mudi", null=True, blank=True)
-    country = models.CharField(max_length=10, default="China")
-    gender = models.CharField(max_length=10, null=True, choices=SEX)
-    email_verified = models.BooleanField(default=False, )
-
-    state_or_province = models.CharField(max_length=20, default="Jiangsu", )
-    city = models.CharField(max_length=20, default="Najing", )
-    zip_code = models.IntegerField(default=210010)
-    detailed_address = models.TextField(null=True, blank=True)
 
     objects = UserAccountManager()
 
@@ -69,3 +63,19 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
 
     def __str__(self):
         return self.email
+
+
+class UserProfile(models.Model):
+    name = models.CharField(max_length=20, null=True, blank=True)
+    phone_number = models.CharField(max_length=15, unique=True, null=True)
+    avatar = models.ImageField(upload_to="mudi", null=True, blank=True)
+    gender = models.CharField(max_length=10, null=True, choices=SEX)
+    email_verified = models.BooleanField(default=False, )
+
+
+def user_profile_receiver(sender, instance, created, *args, **kwargs):
+    if created:
+        UserProfile.objects.create(user=instance)
+
+
+post_save.connect(user_profile_receiver, sender=settings.AUTH_USER_MODEL)
