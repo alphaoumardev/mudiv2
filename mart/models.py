@@ -47,7 +47,6 @@ class Product(models.Model):
     status = models.BooleanField(default=True, null=True, )
     rating = models.IntegerField(default=1)
     stock = models.IntegerField(default=50)
-    quantity = models.IntegerField(default=1)
     onsale = models.CharField(null=True, blank=True, choices=SALES, max_length=10)
     discount = models.DecimalField(decimal_places=2, max_digits=3, default=1, null=True, blank=True)
 
@@ -70,6 +69,7 @@ class Product(models.Model):
 class FuturedImages(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
     image_url = models.ImageField(upload_to="mudi", blank=True, null=True)
+    color_name = models.ForeignKey("ColorsOption", on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return self.image_url.url

@@ -108,13 +108,13 @@ CLOUDINARY_STORAGE = {
     'API_SECRET': 'V0R3h7FwQi54OLbqeppbojibVO0'
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "https://example.com",
-    "https://sub.example.com",
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
-
+# CORS_ALLOWED_ORIGINS = [
+#     "https://example.com",
+#     "https://sub.example.com",
+#     "http://localhost:3000",
+#     "http://127.0.0.1:3000",
+# ]
+CORS_ORIGNS_ALLOW_ALL = True
 CORS_ALLOW_METHODS = [
     "DELETE",
     "GET",
@@ -160,8 +160,8 @@ AUTHENTICATION_BACKENDS = (
 
 SIMPLE_JWT = {
     'AUTH_HEADER_TYPES': ('JWT',),
-    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=600),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=30),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=3600),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
     'AUTH_TOKEN_CLASSES': (
         'rest_framework_simplejwt.tokens.AccessToken',
     )

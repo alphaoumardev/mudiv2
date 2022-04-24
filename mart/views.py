@@ -9,6 +9,17 @@ from rest_framework.pagination import PageNumberPagination
 from django.core.paginator import Paginator
 
 
+# @api_view(['POST'])
+# def search_products(request):
+#     query = request.data.get('query', '')
+#     founded_data = []
+#
+#     if query:
+#         query_list = query.split(" ")
+#
+# for query in query_list: product = ProductModel.objects.filter(Q(category__name__icontains=query) | Q(
+# descriptions__icontains=query)) serializer = ProductSerializer(product, many=True) founded_data += serializer.data
+# return Response(founded_data, status=status.HTTP_200_OK) return Response(founded_data)
 class MyPageNumberPagination(PageNumberPagination):
     page_size = 8  # default page size
     page_size_query_param = 'size'  # ?page=xx&size=??

@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db.models.signals import post_save
-from django_countries.fields import CountryField
+from django.dispatch import receiver
 
 from mudi import settings
 
@@ -33,12 +33,13 @@ class UserAccountManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
+
 SEX = (("Male", "Male"),
-           ("Female", "Female"),
-           ("Secret", "Secret"),)
+       ("Female", "Female"),
+       ("Secret", "Secret"),)
+
 
 class UserAccount(AbstractBaseUser, PermissionsMixin):
-
     email = models.EmailField(max_length=25, unique=True)
     first_name = models.CharField(max_length=25)
     last_name = models.CharField(max_length=25)
@@ -73,7 +74,8 @@ class UserProfile(models.Model):
     email_verified = models.BooleanField(default=False, )
 
 
-def user_profile_receiver(sender, instance, created, *args, **kwargs):
+@receiver(post_save, sender=settings.AUTH_USER_MODEL)
+def user_profile_receiver(sender, instance=None, created=False, *args, **kwargs):
     if created:
         UserProfile.objects.create(user=instance)
 
