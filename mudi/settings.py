@@ -4,6 +4,7 @@ from datetime import timedelta
 
 import django
 from django.utils.encoding import force_str
+from django.views import static
 
 django.utils.encoding.force_text = force_str
 
@@ -32,7 +33,7 @@ INSTALLED_APPS = [
     'mart.apps.MartConfig',
     'orders.apps.OrdersConfig',
     'accounts.apps.AccountsConfig',
-
+    'django_seed',
 ]
 
 MIDDLEWARE = [

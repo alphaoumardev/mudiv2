@@ -1,7 +1,14 @@
 from accounts.serializers import UserCreateSerializer
-from mart.serializers import ProductsModel, VariantModel
+from mart.serializers import ProductSerializer, VariantSerializer
 from .models import *
 from rest_framework import serializers
+from mart.models import Product, Variant
+
+
+class ShippingAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShippingAddress
+        fields = '__all__'
 
 
 class WishListSerializer(serializers.ModelSerializer):
@@ -11,69 +18,73 @@ class WishListSerializer(serializers.ModelSerializer):
 
 
 # The shopping start here
+# class CartProductSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Product
+#         fields = '__all__'
+
+
 class CouponSerializer(serializers.ModelSerializer):
     class Meta:
         model = Coupon
         fields = ['code', 'amound', 'create_at', 'expired_at']
 
 
-class CartItemSerializer(serializers.ModelSerializer):
-    # variants = serializers.SerializerMethodField()
-    # product = serializers.SerializerMethodField()
-    # final_price = serializers.SerializerMethodField()
+# class CartSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Cart
+#         fields = '__all__'
 
+
+class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = '__all__'
 
-    def get_products(self, obj):
-        return ProductsModel(obj.product).data
 
-    def get_item_variants(self, obj):
-        return VariantModel(obj.variants.all(), many=True).data
+class CartItemMiniSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=False, many=False)
+    user = UserCreateSerializer(read_only=False, many=False)
 
-    def get_fianl_price(self, obj):
-        return obj.get_final_price()
+    class Meta:
+        model = CartItem
+        fields = ["id", 'product', 'quantity', 'color', 'size', 'user', "total"]
+
+
+class CartItemUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = ['product', 'quantity', 'color', 'size']
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    user = serializers.SerializerMethodField(read_only=True)
-    shippingAddress = serializers.SerializerMethodField(read_only=True)
-    cartItems = serializers.SerializerMethodField(read_only=True)
-    # total = serializers.SerializerMethodField()
-    # coupon = serializers.SerializerMethodField()
+    class Meta:
+        model = Order
+        fields = '__all__'
+
+
+class OrderMiniSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer(required=False)
+    address = ShippingAddressSerializer(required=False)
 
     class Meta:
         model = Order
         fields = '__all__'
-        # fields = ['reference_code', 'total', 'coupon', 'cart_items',
-        #           'checked_out', 'shipping_address', 'payment',
-        #           'delivered', 'received', 'refunf_requested', 'refunded',
-        #           'ordered_at', 'updated_at']
 
-    def get_cartItems(self, obj):
-        items = obj.cartitem_set.all()
-        serializer = CartItemSerializer(items, many=True)
-        return serializer.data
-        # return CartItemSerializer(obj.product.all(), many=True).data
 
-    def get_shippingAddress(self, obj):
-        try:
-            address = ShippingAddressSerializer(obj.shippingAddress, many=False).data
-        except:
-            address = False
-        return address
+class OrderItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OrderItem
+        fields = '__all__'
 
-    def get_user(self, obj):
-        items = obj.user
-        return UserCreateSerializer(items, many=False).data
 
-    def get_total(self, obj):
-        return obj.get_total()
+class OrderItemMiniSerializer(serializers.ModelSerializer):
+    order = OrderMiniSerializer(read_only=True, required=False)
+    product = ProductSerializer(read_only=True, required=False)
 
-    def get_coupon(self, obj):
-        if obj.coupon is not None:
-            return CouponSerializer(obj.coupon).data
+    class Meta:
+        model = OrderItem
+        fields = '__all__'
 
 
 class PaymentDetailsSerializer(serializers.ModelSerializer):
@@ -82,17 +93,23 @@ class PaymentDetailsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ShippingAddressSerializer(serializers.ModelSerializer):
-    # country = CountryField()
-
-    class Meta:
-        model = ShippingAddress
-        fields = '__all__'
-        # fields = ['user', 'street_address', 'apartment_address',
-        #           'country', 'zip', 'address_type', 'default']
-
-
 class RefundSerializer(serializers.ModelSerializer):
     class Meta:
         model = Refund
         fields = '__all__'
+
+# class OrderSerializer(serializers.ModelSerializer):
+#     # user = serializers.SerializerMethodField(read_only=True)
+#     # shippingAddress = serializers.SerializerMethodField(read_only=True)
+#     # cartItems = serializers.SerializerMethodField(read_only=True)
+#
+#     # total = serializers.SerializerMethodField()
+#     # coupon = serializers.SerializerMethodField()
+#
+#     class Meta:
+#         model = Order
+#         fields = '__all__'
+#         # fields = ['reference_code', 'total', 'coupon', 'cart_items',
+#         #           'checked_out', 'shipping_address', 'payment',
+#         #           'delivered', 'received', 'refunf_requested', 'refunded',
+#         #           'ordered_at', 'updated_at']

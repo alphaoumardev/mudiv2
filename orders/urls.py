@@ -3,11 +3,13 @@ from .views import *
 
 urlpatterns = [
     # The orders
-    path('order/', get_cart, name='orders'),
-    path('countries/', get_countries, name='countries'),
-    path('cart/', CartItemViews.as_view(), name='hw'),
-    path('cart/<str:pk>', CartItemViews.as_view(), name='cart_items'),
+    path('cart/', create_cart, name='cart'),
+    path('cart/<str:pk>', CartItemView.as_view(), name='cart_items'),
 
+    path('carts/', CreateCartApiView.as_view(), name='hw'),
+    path('order/<str:pk>', OrderView.as_view(), name='orders'),
+
+    path('countries/', get_countries, name='countries'),
     path('orders/', get_orders, name='get_orders'),
     path('orders/add/', add_order_items, name='add_order_items'),
     path('orders/myorder/', get_my_orders, name='get_my_orders'),

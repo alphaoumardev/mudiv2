@@ -1,7 +1,10 @@
+import uuid
+
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from phonenumber_field.modelfields import PhoneNumberField
 
 from mudi import settings
 
@@ -40,6 +43,7 @@ SEX = (("Male", "Male"),
 
 
 class UserAccount(AbstractBaseUser, PermissionsMixin):
+    id = models.UUIDField(default=uuid.uuid4(), primary_key=True, unique=True, blank=False, null=False)
     email = models.EmailField(max_length=25, unique=True)
     first_name = models.CharField(max_length=25)
     last_name = models.CharField(max_length=25)
@@ -68,7 +72,7 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
 
 class UserProfile(models.Model):
     name = models.CharField(max_length=20, null=True, blank=True)
-    phone_number = models.CharField(max_length=15, unique=True, null=True)
+    phone_number = PhoneNumberField(blank=True, null=True)
     avatar = models.ImageField(upload_to="mudi", null=True, blank=True)
     gender = models.CharField(max_length=10, null=True, choices=SEX)
     email_verified = models.BooleanField(default=False, )

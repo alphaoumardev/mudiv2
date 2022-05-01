@@ -98,13 +98,12 @@ class SizesOption(models.Model):
 
 class Variant(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    color = models.ForeignKey(ColorsOption, on_delete=models.CASCADE, blank=True, null=True)
     size = models.ForeignKey(SizesOption, on_delete=models.CASCADE, blank=True, null=True)
     tag = models.ForeignKey(Tags, on_delete=models.CASCADE, blank=True, null=True)
 
 
 class Sliders(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, blank=True, null=True)
+    slideItem = models.ForeignKey(Product, on_delete=models.CASCADE, blank=True, null=True)
 
 
 class Comments(models.Model):

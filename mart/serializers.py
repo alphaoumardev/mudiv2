@@ -4,23 +4,23 @@ from rest_framework import serializers
 from .models import *
 
 
-class GenreModel(serializers.ModelSerializer):
+class GenreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Genre
         # fields = ['genre_name']
         fields = '__all__'
 
 
-class TypesModel(serializers.ModelSerializer):
+class TypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Types
         # fields = ['type_name']
         fields = '__all__'
 
 
-class CategoryModel(serializers.ModelSerializer):
-    genre = GenreModel(many=False, read_only=True)
-    type = TypesModel(many=False, read_only=True)
+class CategorySerializer(serializers.ModelSerializer):
+    genre = GenreSerializer(many=False, read_only=True)
+    type = TypeSerializer(many=False, read_only=True)
 
     class Meta:
         model = Category
@@ -28,8 +28,8 @@ class CategoryModel(serializers.ModelSerializer):
         # fields = '__all__'
 
 
-class ProductsModel(serializers.ModelSerializer):
-    category = CategoryModel(many=False, read_only=True)
+class ProductSerializer(serializers.ModelSerializer):
+    category = CategorySerializer(many=False, read_only=True)
 
     class Meta:
         model = Product
@@ -41,37 +41,37 @@ class ProductsModel(serializers.ModelSerializer):
         # fields  = '__all__'
 
 
-class ColorsOptionModel(serializers.ModelSerializer):
+class ColorsOptionSerializer(serializers.ModelSerializer):
     class Meta:
         model = ColorsOption
         fields = '__all__'
 
 
-class TagModel(serializers.ModelSerializer):
+class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tags
         fields = '__all__'
 
 
-class SizesOptionModel(serializers.ModelSerializer):
+class SizeSerialiser(serializers.ModelSerializer):
     class Meta:
         model = SizesOption
         fields = '__all__'
 
 
-class FuturedImagesModel(serializers.ModelSerializer):
-    product = ProductsModel(many=False, read_only=True)
-    color_name = ColorsOptionModel(many=False, read_only=True)
+class FuturedImagesSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(many=False, read_only=True)
+    color_name = ColorsOptionSerializer(many=False, read_only=True)
 
     class Meta:
         model = FuturedImages
         fields = ['id', 'image_url', 'product', 'color_name']
 
 
-class VariantModel(serializers.ModelSerializer):
-    product = ProductsModel(many=False, read_only=True)
-    color = ColorsOptionModel(many=False, read_only=True)
-    size = SizesOptionModel(many=False, read_only=True)
+class VariantSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(many=False, read_only=True)
+    color = ColorsOptionSerializer(many=False, read_only=True)
+    size = SizeSerialiser(many=False, read_only=True)
 
     class Meta:
         model = Variant
@@ -79,11 +79,11 @@ class VariantModel(serializers.ModelSerializer):
 
 
 class SlidersModel(serializers.ModelSerializer):
-    product = ProductsModel(many=False, read_only=True)
+    slideItem = ProductSerializer(many=False, read_only=True)
 
     class Meta:
         model = Sliders
-        fields = ['product']
+        fields = ['slideItem']
 
 
 class CommentsModel(serializers.ModelSerializer):
