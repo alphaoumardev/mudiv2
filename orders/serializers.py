@@ -11,11 +11,19 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class WishListSerializer(serializers.ModelSerializer):
+class WishlistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wishlist
         fields = '__all__'
 
+
+class WishlistShowSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(required=False, read_only=True)
+    user = UserCreateSerializer(required=False, read_only=True)
+
+    class Meta:
+        model = Wishlist
+        fields = ['id', 'product', 'user']
 
 # The shopping start here
 # class CartProductSerializer(serializers.ModelSerializer):

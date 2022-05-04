@@ -77,11 +77,11 @@ class UserProfile(models.Model):
     gender = models.CharField(max_length=10, null=True, choices=SEX)
     email_verified = models.BooleanField(default=False, )
 
-
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def user_profile_receiver(sender, instance=None, created=False, *args, **kwargs):
-    if created:
-        UserProfile.objects.create(user=instance)
-
-
-post_save.connect(user_profile_receiver, sender=settings.AUTH_USER_MODEL)
+#
+# @receiver(post_save, sender=settings.AUTH_USER_MODEL)
+# def user_profile_receiver(sender, instance=None, created=False, *args, **kwargs):
+#     if created:
+#         UserProfile.objects.create(user=instance)
+#
+#
+# post_save.connect(user_profile_receiver, sender=settings.AUTH_USER_MODEL)

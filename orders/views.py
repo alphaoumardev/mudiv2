@@ -2,20 +2,19 @@ from datetime import datetime
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.exceptions import PermissionDenied, ValidationError
+from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404, ListCreateAPIView, RetrieveUpdateDestroyAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
 from django_countries import countries
-from rest_framework.templatetags.rest_framework import data
 from rest_framework.views import APIView
 
 # from mart.serializers import *
 from orders.models import *
 from orders.serializers import CartItemSerializer, OrderSerializer, OrderItemMiniSerializer, CartItemUpdateSerializer, \
-    CartItemMiniSerializer
+    CartItemMiniSerializer, WishlistSerializer, WishlistShowSerializer
 
 
 class OrderView(APIView):
@@ -72,7 +71,7 @@ class CreateCartApiView(ListCreateAPIView):
     #
     #     if quantity > product.stock:
     #         return Response("There is no enough product in stock")
-    #     # seriliazer = CartItemSerializer(data=request.data)
+    #     # serializer = CartItemSerializer(data=request.data)
     #     cartItem = CartItem(cart=cart, product=product, quantity=quantity, color=color, size=size)
     #     # product.stock -= cartItem.quantity
     #     # cartItem.save()
@@ -130,16 +129,40 @@ class CartItemView(RetrieveUpdateDestroyAPIView):
 def create_cart(request):
     user = request.user
     if request.method == 'GET':
-        items = CartItem.objects.filter(user=user, )
-        serializer = CartItemMiniSerializer(items, many=True)
-        return Response(serializer.data)
+        cartItems = CartItem.objects.filter(user=user).order_by('-id')
+        cart_count = cartItems.count()
+        order_total = 0
+        for item in cartItems:
+            order_total += item.total
+        serializer = CartItemMiniSerializer(cartItems, many=True)
+        return Response({"result": serializer.data, "order_total": order_total, "cart_count": cart_count})
 
     if request.method == "POST":
+        serializer = CartItemSerializer(data=request.data, many=False)
 
-        seriliazer = CartItemSerializer(data=request.data, many=False)
+        product = Product.objects.get(id=request.data['product'])
+        checkItem = CartItem.objects.filter(product_id=product).exists()
 
-        if seriliazer.is_valid():
-            seriliazer.save()
+        if checkItem:
+            update_data = CartItem.objects.get(product_id=product)
+            serializer = CartItemSerializer(instance=update_data, data=request.data, many=False)
+
+            if serializer.is_valid():
+                serializer.save()
+
+                product = Product.objects.get(id=request.data['product'])
+                quantity = int(request.data['quantity'])
+                cartItem = get_object_or_404(CartItem, product=product)
+
+                total = float(product.price) * quantity
+                cartItem.total = total
+                cartItem.user = request.user
+                cartItem.save()
+                return Response(serializer.data)
+            return Response(serializer.errors)
+
+        if serializer.is_valid():
+            serializer.save()
 
             product = Product.objects.get(id=request.data['product'])
             quantity = int(request.data['quantity'])
@@ -151,40 +174,64 @@ def create_cart(request):
             cartItem.save()
             print(total, cartItem.user)
             print(request.data)
-            return Response(seriliazer.data)
-        return Response(seriliazer.errors)
+            return Response(serializer.data)
+        return Response(serializer.errors)
 
 
 @api_view(["GET", "POST"])
-# @permission_classes([AllowAny])
-def cart(request):
+@permission_classes([IsAuthenticated])
+def create_wishlist(request, ):
     user = request.user
-    # product = get_object_or_404(Product, id=request.data['product'])
-    # product = Product.objects.get(id=request.data['product'])
     if request.method == 'GET':
-        items = CartItem.objects.filter(user=user, )
-        serializer = CartItemSerializer(items, many=True)
-        return Response(serializer.data)
+        wishlist = Wishlist.objects.filter(user=user).order_by('-id')
+        wishlist_count = wishlist.count()
+        serializer = WishlistShowSerializer(wishlist, many=True)
+
+        return Response({"result": serializer.data, "wishlist_count": wishlist_count})
 
     if request.method == "POST":
+        serializer = WishlistSerializer(data=request.data, many=False, )
 
-        seriliazer = CartItemSerializer(data=request.data, many=False)
+        product = Product.objects.get(id=request.data['product'])
+        checkItem = Wishlist.objects.filter(product_id=product).exists()
 
-        if seriliazer.is_valid():
-            seriliazer.save()
+        if checkItem:
+            updated_data = Wishlist.objects.get(product_id=product)
+            serializer = WishlistSerializer(instance=updated_data, data=request.data)
 
-            product = Product.objects.get(id=request.data['product'])
-            quantity = int(request.data['quantity'])
-            cartItem = get_object_or_404(CartItem, user=user)
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
+            return Response(serializer.errors)
 
-            total = float(product.price) * quantity
-            cartItem.total = total
-            # cartItem.user = request.user
-            cartItem.save()
-            print(total, cartItem.user)
-            print(request.data)
-            return Response({"data": seriliazer.data, "total": total})
-        return Response(seriliazer.errors)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
+
+
+@api_view(["GET", "PUT", "DELETE"])
+@permission_classes([IsAuthenticated])
+def operate_wishlist(request, pk):
+    user = request.user
+    if request.method == 'GET':
+        wishlist = Wishlist.objects.get(id=pk, user=user)
+        serializer = WishlistShowSerializer(wishlist, many=False)
+        # checkItem = Wishlist.objects.filter(product_id=product).exists()
+
+        return Response(serializer.data)
+
+    if request.method == 'PUT':
+        wishlist_item = Wishlist.objects.get(id=pk)
+        serializer = WishlistSerializer(instance=wishlist_item, data=request.data, )
+        if serializer.is_valid():
+            serializer.save()
+        return Response(serializer.data)
+
+    if request.method == 'DELETE':
+        wishlist_item = Wishlist.objects.get(id=pk)
+        wishlist_item.delete()
+        return Response("The wishlist item is deleted")
 
 
 @api_view(["GET"])

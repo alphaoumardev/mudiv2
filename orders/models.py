@@ -3,8 +3,6 @@ import uuid
 
 from django.contrib.auth.models import User, AbstractUser
 from django.db import models
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django_countries.fields import CountryField
 
 from accounts.models import UserAccount
@@ -13,12 +11,11 @@ from mudi import settings
 
 
 class Wishlist(models.Model):
-    id = models.UUIDField(default=uuid.uuid4(), primary_key=True, blank=False, null=False)
+    user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, blank=True, null=True)
     product = models.ForeignKey(Product, on_delete=models.CASCADE, blank=True, null=True)
 
 
 class ShippingAddress(models.Model):
-    id = models.UUIDField(default=uuid.uuid4(), primary_key=True, blank=False, null=False)
     user = models.OneToOneField(UserAccount, on_delete=models.CASCADE, null=True, blank=True)
     country = CountryField(multiple=False)
     state = models.CharField(max_length=20, null=True)
@@ -126,7 +123,7 @@ class OrderItem(models.Model):
 
     # def get_total_orderitem_price(self):
     #     return self.quantity * self.product.price
-
+    #
     # def get_total_discount_price(self):
     #     return self.quantity * self.product.discount
     #
@@ -137,6 +134,7 @@ class OrderItem(models.Model):
     #     if self.product.discount:
     #         return self.get_total_discount_price()
     #     return self.get_total_item_price()
+
     @staticmethod
     def create_orderItem(product, order, quantity, total,):
         order_item = OrderItem()

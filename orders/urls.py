@@ -5,6 +5,8 @@ urlpatterns = [
     # The orders
     path('cart/', create_cart, name='cart'),
     path('cart/<str:pk>', CartItemView.as_view(), name='cart_items'),
+    path('wishlist/', create_wishlist, name='wishlist'),
+    path('wishlist/<str:pk>', operate_wishlist, name='wishlist'),
 
     path('carts/', CreateCartApiView.as_view(), name='hw'),
     path('order/<str:pk>', OrderView.as_view(), name='orders'),

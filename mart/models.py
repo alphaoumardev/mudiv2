@@ -20,6 +20,9 @@ class Types(models.Model):
     def __str__(self):
         return self.type_name
 
+    class Meta:
+        verbose_name_plural = 'Types'
+
 
 class Category(models.Model):
     genre = models.ForeignKey(Genre, on_delete=models.CASCADE, null=False)
@@ -27,6 +30,9 @@ class Category(models.Model):
 
     def __str__(self):
         return self.genre.genre_name + " >  " + self.type.type_name
+
+    class Meta:
+        verbose_name_plural = 'Categories'
 
 
 class Product(models.Model):
@@ -74,12 +80,18 @@ class FuturedImages(models.Model):
     def __str__(self):
         return self.image_url.url
 
+    class Meta:
+        verbose_name_plural = 'Detail Images'
+
 
 class Tags(models.Model):
     tag_name = models.CharField(blank=True, null=True, max_length=15, unique=True)
 
     def __str__(self):
         return self.tag_name
+
+    class Meta:
+        verbose_name_plural = 'Tags'
 
 
 class ColorsOption(models.Model):
@@ -105,6 +117,9 @@ class Variant(models.Model):
 class Sliders(models.Model):
     slideItem = models.ForeignKey(Product, on_delete=models.CASCADE, blank=True, null=True)
 
+    class Meta:
+        verbose_name_plural = 'Sliders'
+
 
 class Comments(models.Model):
     product = models.ForeignKey(Product, on_delete=models.CASCADE)
@@ -117,3 +132,6 @@ class Comments(models.Model):
 
     def __str__(self):
         return self.subject + "  " + self.content
+
+    class Meta:
+        verbose_name_plural = 'Comments'
