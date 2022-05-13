@@ -1,8 +1,7 @@
 from accounts.serializers import UserCreateSerializer
-from mart.serializers import ProductSerializer, VariantSerializer
+from mart.serializers import ProductSerializer
 from .models import *
 from rest_framework import serializers
-from mart.models import Product, Variant
 
 
 class ShippingAddressSerializer(serializers.ModelSerializer):
@@ -11,25 +10,27 @@ class ShippingAddressSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ShippingAddressReadSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer(read_only=True)
+
+    class Meta:
+        model = ShippingAddress
+        fields = ['id', 'user', 'country', 'state', 'city', 'street', 'details', 'zip', 'order_note']
+
+
 class WishlistSerializer(serializers.ModelSerializer):
     class Meta:
         model = Wishlist
         fields = '__all__'
 
 
-class WishlistShowSerializer(serializers.ModelSerializer):
+class WishlistReadSerializer(serializers.ModelSerializer):
     product = ProductSerializer(required=False, read_only=True)
     user = UserCreateSerializer(required=False, read_only=True)
 
     class Meta:
         model = Wishlist
         fields = ['id', 'product', 'user']
-
-# The shopping start here
-# class CartProductSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Product
-#         fields = '__all__'
 
 
 class CouponSerializer(serializers.ModelSerializer):
@@ -38,21 +39,15 @@ class CouponSerializer(serializers.ModelSerializer):
         fields = ['code', 'amound', 'create_at', 'expired_at']
 
 
-# class CartSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Cart
-#         fields = '__all__'
-
-
 class CartItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = CartItem
         fields = '__all__'
 
 
-class CartItemMiniSerializer(serializers.ModelSerializer):
-    product = ProductSerializer(read_only=False, many=False)
-    user = UserCreateSerializer(read_only=False, many=False)
+class CartItemReadSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True,)
+    user = UserCreateSerializer(read_only=True,)
 
     class Meta:
         model = CartItem
@@ -71,13 +66,17 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class OrderMiniSerializer(serializers.ModelSerializer):
-    user = UserCreateSerializer(required=False)
-    address = ShippingAddressSerializer(required=False)
+class OrderReadSerializer(serializers.ModelSerializer):
+    user = UserCreateSerializer(required=False, read_only=True)
+    address = ShippingAddressReadSerializer(required=False, read_only=True)
+    # cart = CartItemReadSerializer(many=True, read_only=True)
+    products = ProductSerializer(many=True, read_only=True)
 
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = ['status', 'checked_out', 'isPaid', 'isRefunded', 'isDelivered',
+                  'refund_requested', 'order_reference',  'paid_at',
+                  'user', 'address', 'products']
 
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -86,13 +85,12 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class OrderItemMiniSerializer(serializers.ModelSerializer):
-    order = OrderMiniSerializer(read_only=True, required=False)
-    product = ProductSerializer(read_only=True, required=False)
+class OrderItemReadSerializer(serializers.ModelSerializer):
+    product = ProductSerializer(read_only=True)
 
     class Meta:
         model = OrderItem
-        fields = '__all__'
+        fields = ["id", 'order', 'product', 'quantity', 'color', 'size', "total"]
 
 
 class PaymentDetailsSerializer(serializers.ModelSerializer):
@@ -105,19 +103,3 @@ class RefundSerializer(serializers.ModelSerializer):
     class Meta:
         model = Refund
         fields = '__all__'
-
-# class OrderSerializer(serializers.ModelSerializer):
-#     # user = serializers.SerializerMethodField(read_only=True)
-#     # shippingAddress = serializers.SerializerMethodField(read_only=True)
-#     # cartItems = serializers.SerializerMethodField(read_only=True)
-#
-#     # total = serializers.SerializerMethodField()
-#     # coupon = serializers.SerializerMethodField()
-#
-#     class Meta:
-#         model = Order
-#         fields = '__all__'
-#         # fields = ['reference_code', 'total', 'coupon', 'cart_items',
-#         #           'checked_out', 'shipping_address', 'payment',
-#         #           'delivered', 'received', 'refunf_requested', 'refunded',
-#         #           'ordered_at', 'updated_at']

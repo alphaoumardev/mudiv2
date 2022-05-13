@@ -1,88 +1,15 @@
+from orders.models import *
 from datetime import datetime
-
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.generics import get_object_or_404, ListCreateAPIView, RetrieveUpdateDestroyAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
-
+from rest_framework.permissions import IsAuthenticated, IsAdminUser
 from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK
-from django_countries import countries
 from rest_framework.views import APIView
-
-# from mart.serializers import *
-from orders.models import *
-from orders.serializers import CartItemSerializer, OrderSerializer, OrderItemMiniSerializer, CartItemUpdateSerializer, \
-    CartItemMiniSerializer, WishlistSerializer, WishlistShowSerializer
-
-
-class OrderView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, pk, *args, **kwargs):
-        user = request.user
-        address = ShippingAddress.objects.filter(user=user, primary=True).first()
-        product = get_object_or_404(Product, pk=pk)
-        if product.stock == 0:
-            return Response("This product is out of stock")
-        try:
-            order_reference = request.data.get("order_reference", '')
-            quantity = request.data.get("quantity", 1)
-
-            total = quantity * product.price
-            order = Order().create_order(user, order_reference, status, address, checked_out=True,
-                                         isPaid=False, isDelivered=False,
-                                         paid_at=datetime.datetime.now(),
-                                         delivered_at=datetime.datetime.now(),
-                                         ordered_at=datetime.datetime.now(),
-                                         refund_requested=False,
-                                         isReceived=False,
-                                         isRefunded=False, )
-            order_item = OrderItem().create_orderItem(order, product, quantity, total)
-            serializer = OrderItemMiniSerializer(order_item, )
-
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        except Exception as e:
-            return Response("An error occur when creating the order", e)
-
-
-class CreateCartApiView(ListCreateAPIView):
-    serializer_class = CartItemSerializer
-
-    def get_queryset(self):
-        user = self.request.user
-        queryset = CartItem.objects.filter(cart__user=user, )
-        return queryset
-
-    # def create(self, request, *args, **kwargs):
-    #     user = request.user
-    #     # cart = get_object_or_404(Cart, user=user)
-    #     product = get_object_or_404(Product, pk=request.data['product'])
-    #     color = get_object_or_404(CartItem, pk=request.data['color'])
-    #     size = get_object_or_404(CartItem, pk=request.data['size'])
-    #
-    #     # current_item = CartItem.objects.filter(cart=cart, product=product)
-    #     quantity = int(request.data['quantity'])
-    #
-    #     # if current_item.count() > 0:
-    #     #     Response("You already have this product in your cart")
-    #
-    #     if quantity > product.stock:
-    #         return Response("There is no enough product in stock")
-    #     # serializer = CartItemSerializer(data=request.data)
-    #     cartItem = CartItem(cart=cart, product=product, quantity=quantity, color=color, size=size)
-    #     # product.stock -= cartItem.quantity
-    #     # cartItem.save()
-    #     serializer = CartItemSerializer(cartItem)
-    #     # if serializer.is_valid():
-    #     serializer.save()
-    #         # return Response(serializer.data)
-    #     total = float(product.price) * quantity
-    #     cart.total = total
-    #     cart.save()
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+from orders.serializers import CartItemSerializer, OrderSerializer, CartItemUpdateSerializer, \
+    WishlistSerializer, WishlistReadSerializer, ShippingAddressSerializer, OrderReadSerializer, \
+    CartItemReadSerializer, OrderItemReadSerializer, ShippingAddressReadSerializer, OrderItemSerializer
 
 
 class CartItemView(RetrieveUpdateDestroyAPIView):
@@ -107,10 +34,13 @@ class CartItemView(RetrieveUpdateDestroyAPIView):
 
         if quantity > product.stock:
             return Response("This product is out of stock")
+
         total = float(product.price) * quantity
         cartItem.total = total
         cartItem.user = request.user
         cartItem.save()
+        product.stock -= quantity
+        product.save()
         serializer = CartItemUpdateSerializer(cartItem, data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -134,10 +64,17 @@ def create_cart(request):
         order_total = 0
         for item in cartItems:
             order_total += item.total
-        serializer = CartItemMiniSerializer(cartItems, many=True)
-        return Response({"result": serializer.data, "order_total": order_total, "cart_count": cart_count})
+        serializer = CartItemReadSerializer(cartItems, many=True)
+
+        return Response(
+            {
+                "result": serializer.data,
+                "order_total": order_total,
+                "cart_count": cart_count,
+            })
 
     if request.method == "POST":
+
         serializer = CartItemSerializer(data=request.data, many=False)
 
         product = Product.objects.get(id=request.data['product'])
@@ -154,6 +91,8 @@ def create_cart(request):
                 quantity = int(request.data['quantity'])
                 cartItem = get_object_or_404(CartItem, product=product)
 
+                product.stock -= quantity
+                product.save()
                 total = float(product.price) * quantity
                 cartItem.total = total
                 cartItem.user = request.user
@@ -168,14 +107,14 @@ def create_cart(request):
             quantity = int(request.data['quantity'])
             cartItem = get_object_or_404(CartItem, product=product)
 
+            product.stock -= quantity
+            product.save()
             total = float(product.price) * quantity
             cartItem.total = total
             cartItem.user = request.user
             cartItem.save()
-            print(total, cartItem.user)
-            print(request.data)
             return Response(serializer.data)
-        return Response(serializer.errors)
+        return Response(serializer.errors,)
 
 
 @api_view(["GET", "POST"])
@@ -185,9 +124,8 @@ def create_wishlist(request, ):
     if request.method == 'GET':
         wishlist = Wishlist.objects.filter(user=user).order_by('-id')
         wishlist_count = wishlist.count()
-        serializer = WishlistShowSerializer(wishlist, many=True)
-
-        return Response({"result": serializer.data, "wishlist_count": wishlist_count})
+        serializer = WishlistReadSerializer(wishlist, many=True)
+        return Response({"result": serializer.data, "wishlist_count": wishlist_count, })
 
     if request.method == "POST":
         serializer = WishlistSerializer(data=request.data, many=False, )
@@ -216,7 +154,7 @@ def operate_wishlist(request, pk):
     user = request.user
     if request.method == 'GET':
         wishlist = Wishlist.objects.get(id=pk, user=user)
-        serializer = WishlistShowSerializer(wishlist, many=False)
+        serializer = WishlistReadSerializer(wishlist, many=False)
         # checkItem = Wishlist.objects.filter(product_id=product).exists()
 
         return Response(serializer.data)
@@ -234,83 +172,126 @@ def operate_wishlist(request, pk):
         return Response("The wishlist item is deleted")
 
 
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def get_countries(request, *args, **kwargs):
-    return Response(countries, status=HTTP_200_OK)
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def create_address(request, ):
+    user = request.user
+    if request.method == 'GET':
+        shipping_address = ShippingAddress.objects.filter(user=user).first()
+        serializer = ShippingAddressReadSerializer(shipping_address, many=False)
+        return Response(serializer.data)
 
+    if request.method == "POST":
+        serializer = ShippingAddressSerializer(data=request.data, many=False, )
 
-# Create your views here.
-class CartItemViews(APIView):
-    def post(self, request):
-        serializer = CartItemSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response({serializer.data}, status=status.HTTP_400_BAD_REQUEST)
+        user_address = UserAccount.objects.get(id=request.data['user'])
+        checkAddress = ShippingAddress.objects.filter(user_id=user_address).exists()
 
-    def get(self, request, pk=None):
-        if pk:
-            item = CartItem.objects.get(id=pk)
-            serializer = CartItemSerializer(item)
-            return Response(serializer.data, status=status.HTTP_200_OK)
+        if checkAddress:
+            updated_address = ShippingAddress.objects.get(user_id=user_address)
+            serializer = ShippingAddressSerializer(instance=updated_address, data=request.data)
 
-        item = CartItem.objects.all()
-        serializer = CartItemSerializer(item, many=True)
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-    def patch(self, request, pk=None):
-        item = CartItem.objects.get(id=pk)
-        serializer = CartItemSerializer(item, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response({serializer.data})
-        else:
+            if serializer.is_valid():
+                serializer.save()
+                return Response(serializer.data)
             return Response(serializer.errors)
 
-    def delete(self, request, pk=None):
-        item = get_object_or_404(CartItem, pk=pk)
-        item.delete()
-        return Response({"Item Deleted"})
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
 
 
-@api_view(['POST'])
+@api_view(["GET"])
 @permission_classes([IsAuthenticated])
-def add_order_items(request):
+def get_orderItems(request, ):
     user = request.user
-    data = request.data
-    cartItems = data['cartItems']
-    if cartItems and len(cartItems) == 0:
-        return Response('No order items', status=status.HTTP_400_BAD_REQUEST)
-    else:
-        order = Order.objects.create(
-            user=user,
-        )
-        # ShippingAddress.objects.create(
-        #     order=order,
-        #     user=user,
-        #     state=data['shippingAddress']['state'],
-        #     address=data['shippingAddress']['address'],
-        #     city=['shippingAddress']['city'],
-        #     zip=['shippingAddress']['zip'],
-        #     country=['shippingAddress']['country'],
-        #     street=['shippingAddress']['street']
-        # )
-
-        for i in cartItems:
-            product = Product.objects.get(id=i['product'])
-            item = CartItem.objects.create(
-                product=product,
-                order=order,
-                quantity=i['quantity'],
-                price=i['price'],
-            )
-            product.stock -= item.quantity
-            product.save()
-
-        serializer = OrderSerializer(order, many=False)
+    if request.method == 'GET':
+        orderItem = OrderItem.objects.filter(user=user).order_by('-id')
+        serializer = OrderItemReadSerializer(orderItem, many=True)
         return Response(serializer.data)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def get_cartItems_for_create_order(request, ):
+    user = request.user
+    if request.method == 'GET':
+        orderItem = CartItem.objects.filter(user=user).order_by('-id')
+        serializer = CartItemReadSerializer(orderItem, many=True)
+        return Response(serializer.data)
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def create_order(request, ):
+    user = request.user
+    if request.method == 'GET':
+        orders = Order.objects.filter(user=user, )
+        serializer = OrderReadSerializer(orders, many=True)
+        return Response(serializer.data)
+
+    if request.method == "POST":
+
+        serializer = OrderSerializer(data=request.data, many=False, )
+
+        if serializer.is_valid():
+            serializer.save()
+            # product = Product.objects.all()
+            # carts = CartItem.objects.filter(user=user, product__in=product)
+            # order = Order.objects.filter(user=user).last()
+            # order.status = "COMPLETED"
+            #
+            # order.checked_out = True
+            # order.isPaid = True
+            # order.cart.set(carts)
+            # order.products.set(carts)
+            # order.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
+
+
+@api_view(["GET", "POST"])
+@permission_classes([IsAuthenticated])
+def create_orderItem(request, pk):
+    if request.method == 'GET':
+        # The orderItem
+        orderItems = OrderItem.objects.filter(order=pk)
+        orders_total = 0
+        for item in orderItems:
+            orders_total += item.total
+        serializer = OrderItemReadSerializer(orderItems, many=True)
+        return Response(
+            {
+                "result": serializer.data,
+                "orders_total": orders_total,
+            })
+
+    if request.method == "POST":
+        user = request.user
+        serializer = OrderItemSerializer(data=request.data, many=False)
+
+        if serializer.is_valid():
+            serializer.save()
+
+            order_products = CartItem.objects.filter(user=user)
+
+            orderItem = OrderItem.objects.get(order=pk)
+            orderItem.product.set(order_products)
+
+
+            # product = Product.objects.get(id=request.data['product'])
+            # quantity = int(request.data['quantity'])
+            # orderItem = get_object_or_404(OrderItem, product=product)
+            # orderItem.total=
+            # product.stock -= quantity
+            # product.save()
+            # total = float(product.price) * quantity
+
+            # orderItem.total = total
+            orderItem.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
 
 
 @api_view(['GET'])
@@ -318,7 +299,7 @@ def add_order_items(request):
 def get_my_orders(request):
     user = request.user
     orders = user.order_set.all()
-    serializer = OrderSerializer(orders, many=True)
+    serializer = OrderReadSerializer(orders, many=True)
     return Response(serializer.data)
 
 
@@ -365,3 +346,105 @@ def update_order_to_delivered(request, pk):
     order.delivered_at = datetime.now()
     order.save()
     return Response('Order was delivered')
+
+
+# Create your views here.
+class CartItemViews(APIView):
+    def post(self, request):
+        serializer = CartItemSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        else:
+            return Response({serializer.data}, status=status.HTTP_400_BAD_REQUEST)
+
+    def get(self, request, pk=None):
+        if pk:
+            item = CartItem.objects.get(id=pk)
+            serializer = CartItemSerializer(item)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        item = CartItem.objects.all()
+        serializer = CartItemSerializer(item, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def patch(self, request, pk=None):
+        item = CartItem.objects.get(id=pk)
+        serializer = CartItemSerializer(item, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response({serializer.data})
+        else:
+            return Response(serializer.errors)
+
+    def delete(self, request, pk=None):
+        item = get_object_or_404(CartItem, pk=pk)
+        item.delete()
+        return Response({"Item Deleted"})
+
+
+class CreateCartApiView(ListCreateAPIView):
+    serializer_class = CartItemSerializer
+
+    def get_queryset(self):
+        user = self.request.user
+        queryset = CartItem.objects.filter(cart__user=user, )
+        return queryset
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        cart = get_object_or_404(CartItem, user=user)
+        product = get_object_or_404(Product, pk=request.data['product'])
+        color = get_object_or_404(CartItem, pk=request.data['color'])
+        size = get_object_or_404(CartItem, pk=request.data['size'])
+
+        # current_item = CartItem.objects.filter(cart=cart, product=product)
+        quantity = int(request.data['quantity'])
+
+        # if current_item.count() > 0:
+        #     Response("You already have this product in your cart")
+
+        if quantity > product.stock:
+            return Response("There is no enough product in stock")
+        # serializer = CartItemSerializer(data=request.data)
+        cartItem = CartItem(cart=cart, product=product, quantity=quantity, color=color, size=size)
+        # product.stock -= cartItem.quantity
+        # cartItem.save()
+        serializer = CartItemSerializer(cartItem)
+        # if serializer.is_valid():
+        serializer.save()
+        # return Response(serializer.data)
+        total = float(product.price) * quantity
+        cart.total = total
+        cart.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+# class OrderView(APIView):
+#     permission_classes = [IsAuthenticated]
+#
+#     def post(self, request, pk, *args, **kwargs):
+#         user = request.user
+#         address = ShippingAddress.objects.filter(user=user, primary=True).first()
+#         product = get_object_or_404(Product, pk=pk)
+#         if product.stock == 0:
+#             return Response("This product is out of stock")
+#         try:
+#             order_reference = request.data.get("order_reference", '')
+#             quantity = request.data.get("quantity", 1)
+#
+#             total = quantity * product.price
+#             order = Order().create_order(user, order_reference, status, address, checked_out=True,
+#                                          isPaid=False, isDelivered=False,
+#                                          paid_at=datetime.datetime.now(),
+#                                          delivered_at=datetime.datetime.now(),
+#                                          ordered_at=datetime.datetime.now(),
+#                                          refund_requested=False,
+#                                          isReceived=False,
+#                                          isRefunded=False, )
+#             order_item = OrderItem().create_orderItem(order, product, quantity, total)
+#             # serializer = OrderItemReadSerializer(order_item, )
+#
+#             return Response(serializer.data, status=status.HTTP_201_CREATED)
+#
+#         except Exception as e:
+#             return Response("An error occur when creating the order", e)

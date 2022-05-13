@@ -3,6 +3,9 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework import viewsets
+
+from orders.models import Wishlist
+from orders.serializers import WishlistSerializer, WishlistReadSerializer
 from .serializers import *
 from .models import *
 from rest_framework.pagination import PageNumberPagination
@@ -40,12 +43,12 @@ class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all().order_by("id")
     serializer_class = ProductSerializer
     pagination_class = MyPageNumberPagination
-    permission_classes = [AllowAny]
+    permission_classes = [AllowAny, IsAuthenticated]
 
 
 # Here are just for the products
 @api_view(['GET', 'POST'])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_products(request):
     if request.method == 'GET':
         products = Product.objects.all()
@@ -60,7 +63,7 @@ def get_products(request):
 
 
 @api_view(['GET', 'POST'])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_product(request):
     if request.method == 'GET':
         products = Product.objects.all().order_by("id")
@@ -78,10 +81,15 @@ def get_product(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_one_product(request, pk):
+    user = request.user
     if request.method == "GET":
         article = Product.objects.get(id=pk)
+        # if user:
+        #     wishlisted = Wishlist.objects.filter(product=article, user=user)
+        #     seri = WishlistShowSerializer(wishlisted, many=True)
+        #     return Response(seri.data)
         seriliazer = ProductSerializer(article, many=False)
         return Response(seriliazer.data)
     if request.method == 'PUT':
@@ -97,7 +105,7 @@ def get_one_product(request, pk):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_pro_by_category(request, pk):
     if request.method == "GET":
         category = Category.objects.get(id=pk)
@@ -107,7 +115,7 @@ def get_pro_by_category(request, pk):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_genre(request):
     if request.method == "GET":
         genres = Genre.objects.all()
@@ -116,7 +124,7 @@ def get_genre(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_one_genre(request, pk):
     if request.method == "GET":
         genres = Genre.objects.get(id=pk)
@@ -125,7 +133,7 @@ def get_one_genre(request, pk):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_types(request):
     if request.method == "GET":
         types = Types.objects.all()
@@ -134,7 +142,7 @@ def get_types(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_one_type(request, pk):
     if request.method == "GET":
         types = Types.objects.get(id=pk)
@@ -143,7 +151,7 @@ def get_one_type(request, pk):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_category(request):
     if request.method == "GET":
         categories = Category.objects.all()
@@ -152,7 +160,7 @@ def get_category(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_one_category(request, pk):
     if request.method == "GET":
         categories = Category.objects.get(id=pk)
@@ -161,7 +169,7 @@ def get_one_category(request, pk):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_by_genre(request, pk):
     if request.method == "GET":
         categories = Category.objects.filter(genre__id=pk)
@@ -170,7 +178,7 @@ def get_by_genre(request, pk):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_by_type(request, pk):
     if request.method == "GET":
         categories = Category.objects.filter(type__id=pk)
@@ -179,7 +187,7 @@ def get_by_type(request, pk):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_variants(request):
     if request.method == "GET":
         variant = Variant.objects.all()
@@ -188,7 +196,7 @@ def get_variants(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_one_variant(request, pk):
     if request.method == "GET":
         variant = Variant.objects.filter(product__id=pk)
@@ -197,7 +205,7 @@ def get_one_variant(request, pk):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_futured_images(request, pk):
     if request.method == "GET":
         images = FuturedImages.objects.filter(product__id=pk)
@@ -206,7 +214,7 @@ def get_futured_images(request, pk):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_categories(request):
     if request.method == "GET":
         genres = Genre.objects.all()
@@ -215,7 +223,7 @@ def get_categories(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_category_by_name(request, query=None):
     if request.method == "GET":
         category = Category.objects.filter(genre__genre_name=query)
@@ -224,7 +232,7 @@ def get_category_by_name(request, query=None):
 
 
 @api_view(["GET", "POST"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_product_by_category(request, query=None, name=None):
     if request.method == "GET":
         genre = Category.objects.filter(genre__genre_name=query).filter(type__type_name=name)
@@ -234,7 +242,7 @@ def get_product_by_category(request, query=None, name=None):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_sliders(request):
     if request.method == "GET":
         slide = Sliders.objects.all().order_by("-id")
@@ -243,7 +251,7 @@ def get_sliders(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_new_products(request):
     if request.method == "GET":
         new_products = Product.objects.filter(onsale='New')
@@ -252,7 +260,7 @@ def get_new_products(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_onsale_products(request):
     if request.method == "GET":
         new_products = Product.objects.filter(onsale='Sale')
@@ -261,7 +269,7 @@ def get_onsale_products(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_colors(request):
     if request.method == "GET":
         colors = ColorsOption.objects.all()
@@ -270,7 +278,7 @@ def get_colors(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_sizes(request):
     if request.method == "GET":
         sizes = SizesOption.objects.all()
@@ -279,7 +287,7 @@ def get_sizes(request):
 
 
 @api_view(["GET"])
-@permission_classes([AllowAny])
+@permission_classes([AllowAny, IsAuthenticated])
 def get_tags(request):
     if request.method == "GET":
         tags = Tags.objects.all()
