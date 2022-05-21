@@ -36,20 +36,20 @@ class CartItem(models.Model):
     quantity = models.IntegerField(default=1)
     color = models.CharField(max_length=20, null=True)
     size = models.CharField(max_length=20, null=True)
+    paid = models.BooleanField(default=False)
 
     def __str__(self):
         return self.product.name
 
 
-# class OrderItem(models.Model):
-#     user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, null=True)
-#     product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
-#     total = models.DecimalField(decimal_places=2, max_digits=6, null=True, )
-#     quantity = models.IntegerField(default=1)
-#     color = models.CharField(max_length=20, null=True)
+class OrderItem(models.Model):
+    product = models.ManyToManyField(Product, blank=True)
+    total = models.DecimalField(decimal_places=2, max_digits=6, null=True, )
+    quantity = models.IntegerField(default=1)
+    color = models.CharField(max_length=20, null=True)
+    size = models.CharField(max_length=20, null=True)
 
 
-#     size = models.CharField(max_length=20, null=True)
 class Order(models.Model):
     PENDING = "pending"
     COMPLETED = "Completed"
@@ -57,10 +57,10 @@ class Order(models.Model):
 
     user = models.ForeignKey(UserAccount, on_delete=models.CASCADE)
     order_reference = models.UUIDField(default=uuid.uuid4(), blank=False, null=False)
-    address = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE, null=True)
 
-    # cart = models.ManyToManyField(CartItem,)
-    products = models.ManyToManyField(Product)
+    address = models.ForeignKey(ShippingAddress, on_delete=models.CASCADE, null=True)
+    cart = models.ManyToManyField(CartItem, blank=True)
+    amount = models.DecimalField(max_digits=6, decimal_places=2, null=True)
 
     status = models.CharField(max_length=20, choices=ORDER_STATUS, default=PENDING)
     checked_out = models.BooleanField(default=False)
@@ -74,17 +74,9 @@ class Order(models.Model):
     refund_requested = models.BooleanField(default=False)
     isRefunded = models.BooleanField(default=False)
 
+
     def __str__(self):
-        return self.user.first_name
-
-
-class OrderItem(models.Model):
-    order = models.ForeignKey(Order, on_delete=models.CASCADE, null=True)
-    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
-    total = models.DecimalField(decimal_places=2, max_digits=6, null=True, )
-    quantity = models.IntegerField(default=1)
-    color = models.CharField(max_length=20, null=True)
-    size = models.CharField(max_length=20, null=True)
+        return self.status
 
 
 class Payments(models.Model):

@@ -58,13 +58,17 @@ class CartItemView(RetrieveUpdateDestroyAPIView):
 @permission_classes([IsAuthenticated])
 def create_cart(request):
     user = request.user
+    order_total = 0.0
+
     if request.method == 'GET':
-        cartItems = CartItem.objects.filter(user=user).order_by('-id')
+        cartItems = CartItem.objects.filter(paid=False, user=user,).order_by('-id')
         cart_count = cartItems.count()
-        order_total = 0
-        for item in cartItems:
-            order_total += item.total
         serializer = CartItemReadSerializer(cartItems, many=True)
+
+        for item in cartItems:
+            if item is not None:
+                order_total += float(item.total)
+
 
         return Response(
             {
@@ -78,10 +82,10 @@ def create_cart(request):
         serializer = CartItemSerializer(data=request.data, many=False)
 
         product = Product.objects.get(id=request.data['product'])
-        checkItem = CartItem.objects.filter(product_id=product).exists()
+        checkItem = CartItem.objects.filter(product_id=product, paid=False).exists()
 
         if checkItem:
-            update_data = CartItem.objects.get(product_id=product)
+            update_data = CartItem.objects.get(product_id=product, )
             serializer = CartItemSerializer(instance=update_data, data=request.data, many=False)
 
             if serializer.is_valid():
@@ -89,12 +93,11 @@ def create_cart(request):
 
                 product = Product.objects.get(id=request.data['product'])
                 quantity = int(request.data['quantity'])
-                cartItem = get_object_or_404(CartItem, product=product)
+                cartItem = get_object_or_404(CartItem, product=product, paid=False)
 
                 product.stock -= quantity
                 product.save()
-                total = float(product.price) * quantity
-                cartItem.total = total
+                cartItem.total = float(product.price) * quantity
                 cartItem.user = request.user
                 cartItem.save()
                 return Response(serializer.data)
@@ -105,12 +108,11 @@ def create_cart(request):
 
             product = Product.objects.get(id=request.data['product'])
             quantity = int(request.data['quantity'])
-            cartItem = get_object_or_404(CartItem, product=product)
+            cartItem = get_object_or_404(CartItem, product=product, paid=False)
 
             product.stock -= quantity
             product.save()
-            total = float(product.price) * quantity
-            cartItem.total = total
+            cartItem.total = float(product.price) * quantity
             cartItem.user = request.user
             cartItem.save()
             return Response(serializer.data)
@@ -212,41 +214,31 @@ def get_orderItems(request, ):
         return Response(serializer.data)
 
 
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def get_cartItems_for_create_order(request, ):
-    user = request.user
-    if request.method == 'GET':
-        orderItem = CartItem.objects.filter(user=user).order_by('-id')
-        serializer = CartItemReadSerializer(orderItem, many=True)
-        return Response(serializer.data)
-
-
 @api_view(["GET", "POST"])
 @permission_classes([IsAuthenticated])
 def create_order(request, ):
     user = request.user
     if request.method == 'GET':
-        orders = Order.objects.filter(user=user, )
+        orders = Order.objects.filter(user=user)
         serializer = OrderReadSerializer(orders, many=True)
         return Response(serializer.data)
 
     if request.method == "POST":
-
         serializer = OrderSerializer(data=request.data, many=False, )
 
         if serializer.is_valid():
             serializer.save()
-            # product = Product.objects.all()
-            # carts = CartItem.objects.filter(user=user, product__in=product)
-            # order = Order.objects.filter(user=user).last()
-            # order.status = "COMPLETED"
-            #
-            # order.checked_out = True
-            # order.isPaid = True
-            # order.cart.set(carts)
-            # order.products.set(carts)
-            # order.save()
+
+            carts = CartItem.objects.filter(user=user, paid=False)
+            order = Order.objects.filter(user=user).last()
+            for p in carts:
+                p.paid = True
+                p.save()
+            order.status = "COMPLETED"
+            order.checked_out = True
+            order.isPaid = True
+            order.cart.set(carts)
+            order.save()
             return Response(serializer.data)
         return Response(serializer.errors)
 

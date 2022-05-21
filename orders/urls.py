@@ -10,7 +10,6 @@ urlpatterns = [
     path('wishlist/<str:pk>', operate_wishlist, name='wishlist'),
     path('address/', create_address,  name='address'),
     path('orders/', create_order, name='orders'),
-    path('ordercart/', get_cartItems_for_create_order, name="cart_items"),
     path('orderitem/<str:pk>', create_orderItem, name='orderItem'),
 
 
