@@ -1,6 +1,6 @@
 # Create your views here.
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework import viewsets
 
@@ -68,8 +68,8 @@ def get_product(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([AllowAny])
 def get_one_product(request, pk):
-    user = request.user
     if request.method == "GET":
         article = Product.objects.get(id=pk)
         # if user:
@@ -263,8 +263,8 @@ def get_colors(request):
         return Response(items.data)
 
 
-@permission_classes([AllowAny])
 @api_view(["GET"])
+@permission_classes([AllowAny])
 def get_sizes(request):
     if request.method == "GET":
         sizes = SizesOption.objects.all()
