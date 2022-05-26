@@ -44,7 +44,7 @@ SEX = (("Male", "Male"),
 
 class UserAccount(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(default=uuid.uuid4(), primary_key=True, unique=True, blank=False, null=False)
-    email = models.EmailField(max_length=25, unique=True)
+    email = models.EmailField(max_length=25, unique=True, blank=True, null=True)
     first_name = models.CharField(max_length=25)
     last_name = models.CharField(max_length=25)
 
