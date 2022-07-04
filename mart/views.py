@@ -1,8 +1,9 @@
 # Create your views here.
+from rest_framework import filters
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
-from rest_framework import viewsets
+from rest_framework import viewsets, generics
 
 from .serializers import *
 from .models import *
@@ -30,6 +31,14 @@ class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all().order_by("id")
     serializer_class = ProductSerializer
     pagination_class = MyPageNumberPagination
+    permission_classes = [AllowAny]
+
+
+class SearchProduct(generics.ListAPIView):
+    queryset = Product.objects.all()
+    serializer_class = ProductSerializer
+    filter_backends = [filters.SearchFilter]
+    search_fields = ['name', 'category', 'brand', 'onsale']
     permission_classes = [AllowAny]
 
 

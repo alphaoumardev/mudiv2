@@ -40,4 +40,5 @@ urlpatterns = [
     path('colors/', get_colors, name="colors"),
     path('sizes/', get_sizes, name="sizes"),
     path('tags/', get_tags, name="tags"),
+    path('search/', SearchProduct.as_view(), name="search")
 ]
