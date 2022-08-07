@@ -31,6 +31,6 @@ admin.site.register(FuturedImages)
 admin.site.register(SizesOption)
 admin.site.register(ColorsOption)
 admin.site.register(Sliders)
-admin.site.register(Comments)
+admin.site.register(Review)
 
 

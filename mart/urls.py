@@ -1,4 +1,5 @@
 from django.urls import path
+
 from .views import *
 
 
@@ -40,5 +41,9 @@ urlpatterns = [
     path('colors/', get_colors, name="colors"),
     path('sizes/', get_sizes, name="sizes"),
     path('tags/', get_tags, name="tags"),
-    path('search/', SearchProduct.as_view(), name="search")
+    path('bycolor/', filter_by_color, name="bycolor"),
+    path('bysize/', filter_by_size, name="bysize"),
+    path('byprice/', filter_by_price, name="byprice"),
+
+    path('review/', review_products, name="reviews")
 ]

@@ -2,11 +2,7 @@ import uuid
 
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from phonenumber_field.modelfields import PhoneNumberField
-
-from mudi import settings
 
 
 class UserAccountManager(BaseUserManager):
@@ -71,12 +67,13 @@ class UserAccount(AbstractBaseUser, PermissionsMixin):
 
 
 class UserProfile(models.Model):
-    name = models.CharField(max_length=20, null=True, blank=True)
-    phone_number = PhoneNumberField(blank=True, null=True)
-    avatar = models.ImageField(upload_to="mudi", null=True, blank=True)
-    gender = models.CharField(max_length=10, null=True, choices=SEX)
-    email_verified = models.BooleanField(default=False, )
+    user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, null=True)
+    contact = PhoneNumberField(blank=True, null=True, unique=True)
+    avatar = models.ImageField(upload_to="mudi", null=True, blank=True, unique=True)
+    gender = models.CharField(max_length=10, null=True, choices=SEX, unique=True)
 
+    def __str__(self):
+        return self.user.first_name
 #
 # @receiver(post_save, sender=settings.AUTH_USER_MODEL)
 # def user_profile_receiver(sender, instance=None, created=False, *args, **kwargs):

@@ -12,7 +12,6 @@ urlpatterns = [
     path('orders/', create_order, name='orders'),
     path('orderitem/<str:pk>', create_orderItem, name='orderItem'),
 
-
     # path('order/<str:pk>', OrderView.as_view(), name='orders'),
     # path('countries/', get_countries, name='countries'),
     # path('orders/', get_orders, name='get_orders'),

@@ -1,6 +1,5 @@
 from django.db import models
 from django.contrib.auth.models import User, AbstractUser
-# from orders.models import CartItem, OrderItems
 from django.utils.safestring import mark_safe
 
 from accounts.models import UserAccount
@@ -121,17 +120,16 @@ class Sliders(models.Model):
         verbose_name_plural = 'Sliders'
 
 
-class Comments(models.Model):
-    product = models.ForeignKey(Product, on_delete=models.CASCADE)
-    user = models.ForeignKey(UserAccount, on_delete=models.CASCADE)
-    subject = models.CharField(max_length=50)
-    content = models.TextField(max_length=400)
+class Review(models.Model):
+    user = models.ForeignKey(UserAccount, on_delete=models.CASCADE, null=True)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, null=True)
+    comment = models.CharField(max_length=400, blank=False)
+    rate = models.IntegerField(default=1)
     create_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    deleted_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return self.subject + "  " + self.content
+        return self.comment
 
     class Meta:
-        verbose_name_plural = 'Comments'
+        verbose_name_plural = 'Reviews'

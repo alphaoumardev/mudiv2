@@ -1,3 +1,4 @@
+from mart.models import Review
 from orders.models import *
 from datetime import datetime
 from rest_framework import status
@@ -9,7 +10,8 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from orders.serializers import CartItemSerializer, OrderSerializer, CartItemUpdateSerializer, \
     WishlistSerializer, WishlistReadSerializer, ShippingAddressSerializer, OrderReadSerializer, \
-    CartItemReadSerializer, OrderItemReadSerializer, ShippingAddressReadSerializer, OrderItemSerializer
+    CartItemReadSerializer, OrderItemReadSerializer, ShippingAddressReadSerializer, OrderItemSerializer, \
+    ReviewSerializer
 
 
 class CartItemView(RetrieveUpdateDestroyAPIView):
@@ -410,6 +412,7 @@ class CreateCartApiView(ListCreateAPIView):
         cart.total = total
         cart.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
+
 
 # class OrderView(APIView):
 #     permission_classes = [IsAuthenticated]

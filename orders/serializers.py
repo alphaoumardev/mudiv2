@@ -1,4 +1,5 @@
 from accounts.serializers import UserCreateSerializer
+from mart.models import Review
 from mart.serializers import ProductSerializer
 from .models import *
 from rest_framework import serializers
@@ -101,4 +102,10 @@ class PaymentDetailsSerializer(serializers.ModelSerializer):
 class RefundSerializer(serializers.ModelSerializer):
     class Meta:
         model = Refund
+        fields = '__all__'
+
+
+class ReviewSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Review
         fields = '__all__'

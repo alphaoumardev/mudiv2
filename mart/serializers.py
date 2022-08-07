@@ -84,9 +84,3 @@ class SlidersModel(serializers.ModelSerializer):
     class Meta:
         model = Sliders
         fields = ['slideItem']
-
-
-class CommentsModel(serializers.ModelSerializer):
-    class Meta:
-        model = Comments
-        fields = '__all__'

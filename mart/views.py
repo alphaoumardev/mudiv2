@@ -1,10 +1,13 @@
 # Create your views here.
+from django.db.models import Q
 from rest_framework import filters
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import viewsets, generics
+import numpy as np
 
+from orders.serializers import ReviewSerializer
 from .serializers import *
 from .models import *
 from rest_framework.pagination import PageNumberPagination
@@ -34,20 +37,17 @@ class ArticleViewSet(viewsets.ModelViewSet):
     permission_classes = [AllowAny]
 
 
-class SearchProduct(generics.ListAPIView):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
-    filter_backends = [filters.SearchFilter]
-    search_fields = ['name', 'category', 'brand', 'onsale']
-    permission_classes = [AllowAny]
-
-
 # Here are just for the products
 @api_view(['GET', 'POST'])
 @permission_classes([AllowAny])
 def get_products(request):
     if request.method == 'GET':
-        products = Product.objects.all()
+        # the product search
+        query = request.GET.get('query') if request.GET.get('query') is not None else ''
+        products = Product.objects.filter(
+            Q(category__product__name__contains=query) |
+            Q(category__product__name__exact=query)
+        )
         serializer = ProductSerializer(products, many=True)
         return Response(serializer.data)
     if request.method == 'POST':
@@ -81,12 +81,12 @@ def get_product(request):
 def get_one_product(request, pk):
     if request.method == "GET":
         article = Product.objects.get(id=pk)
-        # if user:
-        #     wishlisted = Wishlist.objects.filter(product=article, user=user)
-        #     seri = WishlistShowSerializer(wishlisted, many=True)
-        #     return Response(seri.data)
+        reveiws = Review.objects.filter(product=article)
+        count = reveiws.count()
         seriliazer = ProductSerializer(article, many=False)
-        return Response(seriliazer.data)
+        rev = ReviewSerializer(reveiws, many=True)
+        return Response({"pro": seriliazer.data, "rev": rev.data, "count": count})
+
     if request.method == 'PUT':
         article = Product.objects.get(id=pk)
         seriliazer = ProductSerializer(instance=article, data=request.data)
@@ -288,3 +288,66 @@ def get_tags(request):
         tags = Tags.objects.all()
         items = TagSerializer(tags, many=True)
         return Response(items.data)
+
+
+# Filter by color
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def filter_by_color(request):
+    if request.method == "GET":
+        color = request.GET.get('color') if request.GET.get('color') is not None else ''
+        products = Product.objects.filter(Q(futuredimages__color_name__color_name=color))
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+
+
+# Filter product by size
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def filter_by_size(request):
+    if request.method == "GET":
+        size = request.GET.get('size') if request.GET.get('size') is not None else ''
+        products = Product.objects.filter(Q(variant__size__size_name=size))
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+
+
+# Filter product by Tags
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def filter_by_tag(request):
+    if request.method == "GET":
+        tag = request.GET.get('tag') if request.GET.get('tag') is not None else ''
+        products = Product.objects.filter(Q(variant__tag=tag) |
+                                          Q(variant__tag__tag_name=tag))
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+
+
+# Filter product by Price
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def filter_by_price(request):
+    if request.method == "GET":
+        less_price = request.GET.get('less_price') if request.GET.get('less_price') is not None else None
+        greater_price = request.GET.get('greater_price') if request.GET.get('greater_price') is not None else None
+        # price = Product.objects.get('price')
+        products = Product.objects.filter(price__gte=less_price,
+                                          price__lte=greater_price)
+        serializer = ProductSerializer(products, many=True)
+        return Response(serializer.data)
+
+
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def review_products(request):
+    if request.method == "POST":
+        serializer = ReviewSerializer(data=request.data, many=False)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors)
+    if request.method == "GET":
+        reviews = Review.objects.all()
+        serializer = ReviewSerializer(reviews, many=True)
+        return Response(serializer.data)
